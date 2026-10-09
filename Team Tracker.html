@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Team Tracker</title>
+<style>
+:root{--bg:#f6f5f1;--card:#fff;--ink:#1d1d1b;--mute:#76746d;--line:#e4e2da;--acc:#2f6f5e;--accink:#fff;--warn:#b4492f;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#171716;--card:#222220;--ink:#eeede8;--mute:#9a978e;--line:#34332f;--acc:#5fb59d;--accink:#10201b;--warn:#e58a72}}
+:root[data-theme="dark"]{--bg:#171716;--card:#222220;--ink:#eeede8;--mute:#9a978e;--line:#34332f;--acc:#5fb59d;--accink:#10201b;--warn:#e58a72}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:860px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:22px;margin:0}
+h2{font-size:15px;margin:0 0 10px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:16px}
+.chip{background:var(--acc);color:var(--accink);border-radius:99px;padding:3px 12px;font-size:12px;font-weight:600}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:16px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.grow{flex:1;min-width:140px}
+label{font-size:12px;color:var(--mute);display:block;margin-bottom:3px;text-transform:uppercase;letter-spacing:.04em}
+input,textarea,button{font:inherit;color:inherit}
+input[type=date],input[type=time],input[type=text],textarea{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%}
+textarea{min-height:80px;resize:vertical}
+button{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:8px 14px;cursor:pointer}
+button.p{background:var(--acc);color:var(--accink);border-color:var(--acc);font-weight:600}
+button.x{border:none;background:none;color:var(--mute);padding:4px 8px}
+.big{font-size:20px;font-weight:700}
+.times{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:14px 0}
+.task{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.task .t{flex:1}
+.task.done .t{text-decoration:line-through;color:var(--mute)}
+.sm{font-size:12px;color:var(--mute)}
+.late{color:var(--warn)}
+.wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:560px}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:12px;color:var(--mute);text-transform:uppercase;letter-spacing:.04em}
+td.n{max-width:200px;overflow:hidden;text-overflow:ellipsis;color:var(--mute)}
+.mute{color:var(--mute)}
+@media(max-width:520px){.times{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<main>
+  <div class="top"><h1>Team Tracker</h1><span class="chip" id="role">Loading…</span></div>
+  <div id="msg" class="card mute" hidden></div>
+
+  <div class="card" id="addCard" hidden>
+    <h2>Assign a task</h2>
+    <div class="row">
+      <div class="grow" style="flex:3"><label for="ntitle">Task</label><input type="text" id="ntitle" placeholder="What needs to be done?"></div>
+      <div class="grow"><label for="ndue">Due date</label><input type="date" id="ndue"></div>
+      <button class="p" id="nadd" style="align-self:flex-end">Assign</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Tasks</h2>
+    <div id="tasks"><p class="mute">Loading…</p></div>
+  </div>
+
+  <div class="card" id="shiftCard" hidden>
+    <h2>My day</h2>
+    <div class="row"><div class="grow"><label for="sdate">Date</label><input type="date" id="sdate"></div>
+      <div><label>Day</label><div class="big" id="sday"></div></div></div>
+    <div class="times">
+      <div><label for="sin">Clock in</label><input type="time" id="sin"></div>
+      <div><label for="sout">Clock out</label><input type="time" id="sout"></div>
+      <div><label>Total</label><div class="big" id="stotal">–</div></div>
+      <div class="row" style="align-self:flex-end"><button class="p" id="cin">In now</button><button id="cout">Out now</button></div>
+    </div>
+    <label for="snotes">Notes</label>
+    <textarea id="snotes" placeholder="Notes for this day..."></textarea>
+  </div>
+
+  <div class="card">
+    <h2 id="logTitle">Timesheet</h2>
+    <div class="wrap"><table>
+      <thead><tr><th>Employee</th><th>Date</th><th>Day</th><th>In</th><th>Out</th><th>Hours</th><th>Notes</th></tr></thead>
+      <tbody id="log"><tr><td colspan="7" class="mute">Loading…</td></tr></tbody>
+    </table></div>
+  </div>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const pad=n=>String(n).padStart(2,'0');
+const iso=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const nowT=()=>{const d=new Date();return pad(d.getHours())+':'+pad(d.getMinutes())};
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const dayName=k=>DAYS[new Date(k+'T00:00:00').getDay()];
+const mins=r=>{if(!r.in||!r.out)return null;const[a,b]=r.in.split(':').map(Number),[c,d]=r.out.split(':').map(Number);let m=(c*60+d)-(a*60+b);if(m<0)m+=1440;return m};
+const hm=m=>m==null?'–':Math.floor(m/60)+'h '+pad(m%60)+'m';
+const today=iso(new Date());
+
+let db,user,me,boss=false,tasks=[],progress={},shifts=[],sel=today,nt;
+
+function show(m){$('msg').hidden=false;$('msg').textContent=m}
+
+async function init(){
+  try{db=await claude.use('db');user=await claude.use('user')}catch(e){}
+  if(!db||!user){$('role').textContent='Offline';show('Open this page while signed in to claude.ai to use the tracker.');$('tasks').innerHTML='';$('log').innerHTML='';return}
+  me=await user.me();boss=!!me.canEdit;
+  $('role').textContent=boss?'Employer view':'Employee view';
+  $('addCard').hidden=!boss;$('shiftCard').hidden=boss;
+  $('logTitle').textContent=boss?'Team timesheet':'My timesheet';
+  $('ndue').value=today;$('sdate').value=sel;
+  db.collection('tasks').onSnapshot(s=>{tasks=s.docs.map(d=>({id:d.id,...d.data()}));renderTasks()},e=>show('Could not load tasks.'));
+  db.collection('progress').onSnapshot(s=>{progress={};s.docs.forEach(d=>progress[d.id]=d.data());renderTasks()},()=>{});
+  db.collection('shifts').onSnapshot(s=>{shifts=s.docs.map(d=>({id:d.id,...d.data()}));renderShift();renderLog()},()=>{});
+}
+
+function renderTasks(){
+  const list=[...tasks].sort((a,b)=>{const da=progress[a.id]?.done?1:0,db_=progress[b.id]?.done?1:0;return da-db_||(a.due||'9').localeCompare(b.due||'9')});
+  $('tasks').innerHTML=list.length?list.map(t=>{
+    const p=progress[t.id]||{},late=!p.done&&t.due&&t.due<today;
+    return `<div class="task ${p.done?'done':''}"><input type="checkbox" data-id="${t.id}" ${p.done?'checked':''} ${boss?'disabled':''}>
+    <div class="t">${esc(t.title)}<div class="sm ${late?'late':''}">${t.due?'Due '+esc(t.due)+(late?' · overdue':''):'No due date'}${p.done&&p.at?' · done '+esc(new Date(p.at).toLocaleString([], {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})):''}</div></div>
+    ${boss?`<button class="x" data-del="${t.id}" aria-label="Delete task">✕</button>`:''}</div>`}).join('')
+    :'<p class="mute" style="margin:0">'+(boss?'No tasks yet. Assign one above.':'No tasks assigned yet.')+'</p>';
+}
+
+function myShift(){return shifts.find(s=>s.uid===me.id&&s.date===sel)||{in:'',out:'',notes:''}}
+function renderShift(){
+  if(boss||!me)return;
+  const s=myShift();
+  $('sday').textContent=dayName(sel);
+  if(document.activeElement!==$('sin'))$('sin').value=s.in||'';
+  if(document.activeElement!==$('sout'))$('sout').value=s.out||'';
+  if(document.activeElement!==$('snotes'))$('snotes').value=s.notes||'';
+  $('stotal').textContent=hm(mins(s));
+}
+async function saveShift(patch){
+  const s={...myShift(),...patch};
+  const id=sel+'_'+String(me.id).replace(/[^\w-]/g,'');
+  try{await db.doc('shifts/'+id).set({uid:me.id,date:sel,in:s.in||'',out:s.out||'',notes:s.notes||''})}catch(e){show('Could not save. Check your access.')}
+}
+
+async function renderLog(){
+  let rows=shifts.filter(s=>boss||s.uid===me.id).sort((a,b)=>b.date.localeCompare(a.date));
+  let names={};
+  if(boss&&rows.length){try{names=await user.profiles([...new Set(rows.map(r=>r.uid))])}catch(e){}}
+  $('log').innerHTML=rows.map(r=>`<tr><td>${esc(boss?(names[r.uid]?.name||'Employee'):'You')}</td><td>${esc(r.date)}</td><td>${dayName(r.date).slice(0,3)}</td><td>${esc(r.in||'–')}</td><td>${esc(r.out||'–')}</td><td>${hm(mins(r))}</td><td class="n">${esc((r.notes||'').split('\n')[0])}</td></tr>`).join('')||'<tr><td colspan="7" class="mute">Nothing logged yet.</td></tr>';
+}
+
+$('nadd').onclick=async()=>{
+  const t=$('ntitle').value.trim();if(!t||!boss)return;
+  $('ntitle').value='';
+  try{await db.collection('tasks').add({title:t,due:$('ndue').value||'',createdAt:Date.now()})}catch(e){show('Could not add task.')}
+};
+$('ntitle').onkeydown=e=>{if(e.key==='Enter')$('nadd').click()};
+$('tasks').onclick=async e=>{
+  const c=e.target.closest('input[data-id]'),d=e.target.closest('[data-del]');
+  try{
+    if(c&&!boss)await db.doc('progress/'+c.dataset.id).set({done:c.checked,by:me.id,at:Date.now()});
+    if(d&&boss&&confirm('Delete this task?')){await db.doc('tasks/'+d.dataset.del).delete();await db.doc('progress/'+d.dataset.del).delete().catch(()=>{})}
+  }catch(err){show('That action was not allowed.')}
+};
+$('sdate').onchange=e=>{if(e.target.value){sel=e.target.value;renderShift()}};
+$('sin').onchange=e=>saveShift({in:e.target.value});
+$('sout').onchange=e=>saveShift({out:e.target.value});
+$('cin').onclick=()=>{sel=today;$('sdate').value=today;saveShift({in:nowT()})};
+$('cout').onclick=()=>{sel=today;$('sdate').value=today;saveShift({out:nowT()})};
+$('snotes').oninput=e=>{clearTimeout(nt);const v=e.target.value;nt=setTimeout(()=>saveShift({notes:v}),700)};
+init();
+</script>
+</body>
+</html>
