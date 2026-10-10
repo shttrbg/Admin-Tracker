@@ -1,172 +1,159 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
+<html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Team Tracker</title>
+<title>TimeClock</title>
 <style>
-:root{--bg:#f6f5f1;--card:#fff;--ink:#1d1d1b;--mute:#76746d;--line:#e4e2da;--acc:#2f6f5e;--accink:#fff;--warn:#b4492f;
-box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#171716;--card:#222220;--ink:#eeede8;--mute:#9a978e;--line:#34332f;--acc:#5fb59d;--accink:#10201b;--warn:#e58a72}}
-:root[data-theme="dark"]{--bg:#171716;--card:#222220;--ink:#eeede8;--mute:#9a978e;--line:#34332f;--acc:#5fb59d;--accink:#10201b;--warn:#e58a72}
+:root{--bg:#f5f6f8;--card:#fff;--tx:#1c2430;--mu:#6b7686;--bd:#e1e5ea;--ac:#2f6fed;--ok:#1f9d55;--no:#d64545;--wa:#d98a00;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12161c;--card:#1b212a;--tx:#e7ebf0;--mu:#93a0b2;--bd:#2a3340;--ac:#5b8def;--ok:#3cc47c;--no:#f06a6a;--wa:#f0a93a}}
+:root[data-theme="dark"]{--bg:#12161c;--card:#1b212a;--tx:#e7ebf0;--mu:#93a0b2;--bd:#2a3340;--ac:#5b8def;--ok:#3cc47c;--no:#f06a6a;--wa:#f0a93a}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
-main{max-width:860px;margin:0 auto;padding:20px 16px 40px}
-h1{font-size:22px;margin:0}
-h2{font-size:15px;margin:0 0 10px}
-.top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:16px}
-.chip{background:var(--acc);color:var(--accink);border-radius:99px;padding:3px 12px;font-size:12px;font-weight:600}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:16px}
-.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-.grow{flex:1;min-width:140px}
-label{font-size:12px;color:var(--mute);display:block;margin-bottom:3px;text-transform:uppercase;letter-spacing:.04em}
-input,textarea,button{font:inherit;color:inherit}
-input[type=date],input[type=time],input[type=text],textarea{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%}
-textarea{min-height:80px;resize:vertical}
-button{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:8px 14px;cursor:pointer}
-button.p{background:var(--acc);color:var(--accink);border-color:var(--acc);font-weight:600}
-button.x{border:none;background:none;color:var(--mute);padding:4px 8px}
-.big{font-size:20px;font-weight:700}
-.times{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:14px 0}
-.task{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
-.task .t{flex:1}
-.task.done .t{text-decoration:line-through;color:var(--mute)}
-.sm{font-size:12px;color:var(--mute)}
-.late{color:var(--warn)}
-.wrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse;min-width:560px}
-th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);white-space:nowrap}
-th{font-size:12px;color:var(--mute);text-transform:uppercase;letter-spacing:.04em}
-td.n{max-width:200px;overflow:hidden;text-overflow:ellipsis;color:var(--mute)}
-.mute{color:var(--mute)}
-@media(max-width:520px){.times{grid-template-columns:1fr 1fr}}
-</style>
-</head>
-<body>
-<main>
-  <div class="top"><h1>Team Tracker</h1><span class="chip" id="role">Loading…</span></div>
-  <div id="msg" class="card mute" hidden></div>
-
-  <div class="card" id="addCard" hidden>
-    <h2>Assign a task</h2>
-    <div class="row">
-      <div class="grow" style="flex:3"><label for="ntitle">Task</label><input type="text" id="ntitle" placeholder="What needs to be done?"></div>
-      <div class="grow"><label for="ndue">Due date</label><input type="date" id="ndue"></div>
-      <button class="p" id="nadd" style="align-self:flex-end">Assign</button>
-    </div>
-  </div>
-
-  <div class="card">
-    <h2>Tasks</h2>
-    <div id="tasks"><p class="mute">Loading…</p></div>
-  </div>
-
-  <div class="card" id="shiftCard" hidden>
-    <h2>My day</h2>
-    <div class="row"><div class="grow"><label for="sdate">Date</label><input type="date" id="sdate"></div>
-      <div><label>Day</label><div class="big" id="sday"></div></div></div>
-    <div class="times">
-      <div><label for="sin">Clock in</label><input type="time" id="sin"></div>
-      <div><label for="sout">Clock out</label><input type="time" id="sout"></div>
-      <div><label>Total</label><div class="big" id="stotal">–</div></div>
-      <div class="row" style="align-self:flex-end"><button class="p" id="cin">In now</button><button id="cout">Out now</button></div>
-    </div>
-    <label for="snotes">Notes</label>
-    <textarea id="snotes" placeholder="Notes for this day..."></textarea>
-  </div>
-
-  <div class="card">
-    <h2 id="logTitle">Timesheet</h2>
-    <div class="wrap"><table>
-      <thead><tr><th>Employee</th><th>Date</th><th>Day</th><th>In</th><th>Out</th><th>Hours</th><th>Notes</th></tr></thead>
-      <tbody id="log"><tr><td colspan="7" class="mute">Loading…</td></tr></tbody>
-    </table></div>
-  </div>
-</main>
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:960px;margin:0 auto;padding:16px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+h1{font-size:20px;margin:0}h2{font-size:16px;margin:0 0 10px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px;margin-bottom:14px}
+.tabs{display:flex;gap:6px}
+button,select,input,textarea{font:inherit;color:var(--tx)}
+button{border:1px solid var(--bd);background:var(--card);border-radius:8px;padding:7px 12px;cursor:pointer}
+button.on,button.pri{background:var(--ac);border-color:var(--ac);color:#fff}
+button.in{background:var(--ok);border-color:var(--ok);color:#fff}button.out{background:var(--no);border-color:var(--no);color:#fff}
+button.sm{padding:3px 9px;font-size:13px}button.link{border:0;background:none;color:var(--ac);padding:2px 6px}
+input,select,textarea{width:100%;border:1px solid var(--bd);background:var(--bg);border-radius:8px;padding:8px}
+textarea{resize:vertical;min-height:56px}
+.big{font-size:34px;font-weight:700;letter-spacing:.5px}.mu{color:var(--mu)}.sm-t{font-size:13px}
+.clock{text-align:center}.clock button{font-size:18px;padding:12px 34px;margin:10px 0}
+.grid{display:grid;grid-template-columns:240px 1fr;gap:14px}
+@media(max-width:700px){.grid{grid-template-columns:1fr}}
+.emp{display:flex;justify-content:space-between;align-items:center;padding:10px;border:1px solid var(--bd);border-radius:10px;margin-bottom:8px;cursor:pointer}
+.emp.sel{border-color:var(--ac);box-shadow:0 0 0 1px var(--ac)}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--mu);margin-right:6px}.dot.on{background:var(--ok)}
+.task{border:1px solid var(--bd);border-radius:10px;padding:10px;margin-bottom:8px}
+.task.done .tt{text-decoration:line-through;color:var(--mu)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.row>*{flex:1 1 140px}.row>.fix{flex:0 0 auto}
+.tag{font-size:12px;border-radius:99px;padding:1px 8px;border:1px solid var(--bd);color:var(--mu)}
+.tbl{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:480px}th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--bd);font-size:13px;vertical-align:top}
+.note{background:var(--bg);border-radius:8px;padding:6px 8px;margin-top:6px;font-size:13px;white-space:pre-wrap}
+</style></head><body><div class="wrap">
+<header><div><h1>⏱ TimeClock</h1><div class="mu sm-t" id="who"></div></div><div class="tabs" id="tabs"></div></header>
+<div id="app"><div class="card mu">Loading…</div></div></div>
 <script>
-const $=id=>document.getElementById(id);
-const DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-const pad=n=>String(n).padStart(2,'0');
-const iso=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
-const nowT=()=>{const d=new Date();return pad(d.getHours())+':'+pad(d.getMinutes())};
-const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const dayName=k=>DAYS[new Date(k+'T00:00:00').getDay()];
-const mins=r=>{if(!r.in||!r.out)return null;const[a,b]=r.in.split(':').map(Number),[c,d]=r.out.split(':').map(Number);let m=(c*60+d)-(a*60+b);if(m<0)m+=1440;return m};
-const hm=m=>m==null?'–':Math.floor(m/60)+'h '+pad(m%60)+'m';
-const today=iso(new Date());
-
-let db,user,me,boss=false,tasks=[],progress={},shifts=[],sel=today,nt;
-
-function show(m){$('msg').hidden=false;$('msg').textContent=m}
+const $=s=>document.querySelector(s);
+const E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fDate=t=>new Date(t).toLocaleDateString(undefined,{weekday:'long',month:'short',day:'numeric',year:'numeric'});
+const fTime=t=>new Date(t).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'});
+const dur=ms=>{const m=Math.max(0,Math.round(ms/60000));return Math.floor(m/60)+'h '+String(m%60).padStart(2,'0')+'m'};
+const sod=()=>{const d=new Date();d.setHours(0,0,0,0);return d.getTime()};
+const sow=()=>{const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-d.getDay());return d.getTime()};
+let db,user,me,isOwner=false,view='employee',sel=null,editing=null,pending=false;
+let punches=[],tasks=[],staff=[],names={};
+const open=u=>punches.find(p=>p.uid===u&&p.outAt==null);
+const worked=(u,from)=>punches.filter(p=>p.uid===u&&(p.outAt??Date.now())>from).reduce((a,p)=>a+((p.outAt??Date.now())-Math.max(p.inAt,from)),0);
+const nm=u=>u===me?'You':(names[u]||'Employee');
 
 async function init(){
-  try{db=await claude.use('db');user=await claude.use('user')}catch(e){}
-  if(!db||!user){$('role').textContent='Offline';show('Open this page while signed in to claude.ai to use the tracker.');$('tasks').innerHTML='';$('log').innerHTML='';return}
-  me=await user.me();boss=!!me.canEdit;
-  $('role').textContent=boss?'Employer view':'Employee view';
-  $('addCard').hidden=!boss;$('shiftCard').hidden=boss;
-  $('logTitle').textContent=boss?'Team timesheet':'My timesheet';
-  $('ndue').value=today;$('sdate').value=sel;
-  db.collection('tasks').onSnapshot(s=>{tasks=s.docs.map(d=>({id:d.id,...d.data()}));renderTasks()},e=>show('Could not load tasks.'));
-  db.collection('progress').onSnapshot(s=>{progress={};s.docs.forEach(d=>progress[d.id]=d.data());renderTasks()},()=>{});
-  db.collection('shifts').onSnapshot(s=>{shifts=s.docs.map(d=>({id:d.id,...d.data()}));renderShift();renderLog()},()=>{});
+  user=await claude.use('user');db=await claude.use('db');
+  if(!db||!user){$('#app').innerHTML='<div class="card">Please sign in to claude.ai to use TimeClock.</div>';return}
+  me=await user.id();isOwner=user.isOwner();view=isOwner?'employer':'employee';
+  if(!isOwner)try{await db.collection('staff').doc(me).set({uid:me})}catch(e){}
+  const sub=(c,fn)=>db.collection(c).onSnapshot(s=>{fn(s.docs.map(d=>({id:d.id,...d.data()})));resolveNames()},e=>console.error(e));
+  sub('punches',d=>punches=d);sub('tasks',d=>tasks=d);sub('staff',d=>staff=d);
+  setInterval(tick,1000);render();
 }
+async function resolveNames(){
+  const ids=[...new Set([...staff.map(s=>s.uid),...punches.map(p=>p.uid),...tasks.map(t=>t.uid)])].filter(i=>i&&i!==me);
+  try{const ps=await user.profiles(ids);ids.forEach(i=>names[i]=ps[i]?.name||'')}catch(e){}
+  schedule();
+}
+function schedule(){const a=document.activeElement;if(a&&/INPUT|TEXTAREA|SELECT/.test(a.tagName)&&$('#app').contains(a)){pending=true;return}render()}
+document.addEventListener('focusout',()=>{if(pending)setTimeout(()=>{if(!/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)){pending=false;render()}},50)});
+function tick(){const c=$('#clk');if(c)c.textContent=new Date().toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit',second:'2-digit'});
+  const r=$('#run'),o=open(me);if(r&&o)r.textContent=dur(Date.now()-o.inAt);}
 
-function renderTasks(){
-  const list=[...tasks].sort((a,b)=>{const da=progress[a.id]?.done?1:0,db_=progress[b.id]?.done?1:0;return da-db_||(a.due||'9').localeCompare(b.due||'9')});
-  $('tasks').innerHTML=list.length?list.map(t=>{
-    const p=progress[t.id]||{},late=!p.done&&t.due&&t.due<today;
-    return `<div class="task ${p.done?'done':''}"><input type="checkbox" data-id="${t.id}" ${p.done?'checked':''} ${boss?'disabled':''}>
-    <div class="t">${esc(t.title)}<div class="sm ${late?'late':''}">${t.due?'Due '+esc(t.due)+(late?' · overdue':''):'No due date'}${p.done&&p.at?' · done '+esc(new Date(p.at).toLocaleString([], {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})):''}</div></div>
-    ${boss?`<button class="x" data-del="${t.id}" aria-label="Delete task">✕</button>`:''}</div>`}).join('')
-    :'<p class="mute" style="margin:0">'+(boss?'No tasks yet. Assign one above.':'No tasks assigned yet.')+'</p>';
+function render(){
+  $('#who').textContent=isOwner?'Signed in as employer':'Signed in as employee';
+  $('#tabs').innerHTML=isOwner?`<button class="${view==='employer'?'on':''}" data-a="view" data-v="employer">Employer</button><button class="${view==='employee'?'on':''}" data-a="view" data-v="employee">My clock</button>`:'';
+  $('#app').innerHTML=view==='employer'?employer():employee();tick();
 }
-
-function myShift(){return shifts.find(s=>s.uid===me.id&&s.date===sel)||{in:'',out:'',notes:''}}
-function renderShift(){
-  if(boss||!me)return;
-  const s=myShift();
-  $('sday').textContent=dayName(sel);
-  if(document.activeElement!==$('sin'))$('sin').value=s.in||'';
-  if(document.activeElement!==$('sout'))$('sout').value=s.out||'';
-  if(document.activeElement!==$('snotes'))$('snotes').value=s.notes||'';
-  $('stotal').textContent=hm(mins(s));
+let cDate='',cTime='';
+document.addEventListener('input',e=>{if(e.target.id==='c-date')cDate=e.target.value;if(e.target.id==='c-time')cTime=e.target.value});
+const punchMs=()=>{const n=Date.now(),d=cDate||dV(n),t=cTime||tV(n);return toMs(d,t)};
+function clockCard(){
+  const o=open(me);
+  return `<div class="card clock"><div class="row" style="max-width:420px;margin:0 auto;text-align:left"><label class="mu sm-t">Date<input type="date" id="c-date" value="${cDate||dV(Date.now())}"></label><label class="mu sm-t">Time <span style="opacity:.7">(blank = now)</span><input type="time" id="c-time" value="${cTime}"></label></div>
+  <button class="${o?'out':'in'}" data-a="${o?'out':'in'}">${o?'Clock Out':'Clock In'}</button>
+  <textarea id="shiftnote" placeholder="Shift note (saved when you clock ${o?'out':'in'})">${E(o?.note||'')}</textarea>
+  <div class="mu sm-t" style="margin-top:8px">Today: <b>${dur(worked(me,sod()))}</b> · This week: <b>${dur(worked(me,sow()))}</b></div></div>`;
 }
-async function saveShift(patch){
-  const s={...myShift(),...patch};
-  const id=sel+'_'+String(me.id).replace(/[^\w-]/g,'');
-  try{await db.doc('shifts/'+id).set({uid:me.id,date:sel,in:s.in||'',out:s.out||'',notes:s.notes||''})}catch(e){show('Could not save. Check your access.')}
+function taskCard(t,emp){
+  if(editing===t.id&&!emp)return `<div class="task"><input id="e-title" value="${E(t.title)}"><div class="row" style="margin-top:6px"><input id="e-due" type="date" value="${E(t.due||'')}"><select id="e-st">${['todo','doing','done'].map(s=>`<option ${t.status===s?'selected':''}>${s}</option>`).join('')}</select></div><textarea id="e-note" style="margin-top:6px" placeholder="Employer notes">${E(t.note||'')}</textarea><div class="row" style="margin-top:6px"><button class="pri fix" data-a="save" data-id="${t.id}">Save</button><button class="fix" data-a="cancel">Cancel</button></div></div>`;
+  return `<div class="task ${t.status==='done'?'done':''}"><div class="row"><div class="tt"><b>${E(t.title)}</b> ${t.due?`<span class="tag">due ${fDate(t.due+'T00:00')}</span>`:''}</div>
+  <select class="fix" style="width:auto" data-a="status" data-id="${t.id}">${['todo','doing','done'].map(s=>`<option ${t.status===s?'selected':''}>${s}</option>`).join('')}</select>
+  ${!emp?`<button class="sm fix" data-a="edit" data-id="${t.id}">Edit</button><button class="sm fix" data-a="del" data-id="${t.id}">Delete</button>`:''}</div>
+  ${t.note?`<div class="note"><b>Employer:</b> ${E(t.note)}</div>`:''}
+  <textarea data-a="empnote" data-id="${t.id}" placeholder="Employee notes…" style="margin-top:6px;min-height:40px">${E(t.empNote||'')}</textarea></div>`;
 }
-
-async function renderLog(){
-  let rows=shifts.filter(s=>boss||s.uid===me.id).sort((a,b)=>b.date.localeCompare(a.date));
-  let names={};
-  if(boss&&rows.length){try{names=await user.profiles([...new Set(rows.map(r=>r.uid))])}catch(e){}}
-  $('log').innerHTML=rows.map(r=>`<tr><td>${esc(boss?(names[r.uid]?.name||'Employee'):'You')}</td><td>${esc(r.date)}</td><td>${dayName(r.date).slice(0,3)}</td><td>${esc(r.in||'–')}</td><td>${esc(r.out||'–')}</td><td>${hm(mins(r))}</td><td class="n">${esc((r.notes||'').split('\n')[0])}</td></tr>`).join('')||'<tr><td colspan="7" class="mute">Nothing logged yet.</td></tr>';
+let editP=null;
+const dV=t=>{const d=new Date(t);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const tV=t=>{const d=new Date(t);return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
+const toMs=(d,t)=>new Date(d+'T'+t).getTime();
+function manual(){return `<div class="card"><h2>Add time manually</h2><div class="row"><label class="mu sm-t">Date<input type="date" id="m-date" value="${dV(Date.now())}"></label><label class="mu sm-t">Clock in<input type="time" id="m-in"></label><label class="mu sm-t">Clock out<input type="time" id="m-out"></label></div><input id="m-note" style="margin:8px 0" placeholder="Note (optional)"><button class="pri" data-a="addman">Add entry</button></div>`}
+function history(u,max){
+  const rows=punches.filter(p=>p.uid===u).sort((a,b)=>b.inAt-a.inAt).slice(0,max);
+  if(!rows.length)return '<div class="mu">No time entries yet.</div>';
+  return `<div class="tbl"><table><tr><th>Day / Date</th><th>In</th><th>Out</th><th>Hours</th><th>Note</th><th></th></tr>${rows.map(p=>editP===p.id?`<tr><td><input type="date" id="p-date" value="${dV(p.inAt)}"></td><td><input type="time" id="p-in" value="${tV(p.inAt)}"></td><td><input type="time" id="p-out" value="${p.outAt?tV(p.outAt):''}"></td><td></td><td><input id="p-note" value="${E(p.note||'')}"></td><td style="white-space:nowrap"><button class="sm pri" data-a="savep" data-id="${p.id}">Save</button> <button class="sm" data-a="cancelp">Cancel</button></td></tr>`:`<tr><td>${fDate(p.inAt)}</td><td>${fTime(p.inAt)}</td><td>${p.outAt?fTime(p.outAt):'<span class="tag">active</span>'}</td><td>${dur((p.outAt??Date.now())-p.inAt)}</td><td>${E(p.note||'')}</td><td style="white-space:nowrap"><button class="sm link" data-a="editp" data-id="${p.id}">Edit</button><button class="sm link" data-a="delp" data-id="${p.id}">Delete</button></td></tr>`).join('')}</table></div>`;
 }
-
-$('nadd').onclick=async()=>{
-  const t=$('ntitle').value.trim();if(!t||!boss)return;
-  $('ntitle').value='';
-  try{await db.collection('tasks').add({title:t,due:$('ndue').value||'',createdAt:Date.now()})}catch(e){show('Could not add task.')}
-};
-$('ntitle').onkeydown=e=>{if(e.key==='Enter')$('nadd').click()};
-$('tasks').onclick=async e=>{
-  const c=e.target.closest('input[data-id]'),d=e.target.closest('[data-del]');
+function employee(){
+  const mine=tasks.filter(t=>t.uid===me).sort((a,b)=>(a.status==='done')-(b.status==='done'));
+  return clockCard()+`<div class="card"><h2>My tasks</h2>${mine.map(t=>taskCard(t,true)).join('')||'<div class="mu">No tasks assigned yet.</div>'}</div><div class="card"><h2>My timesheet</h2>${history(me,30)}</div>`;
+}
+function employer(){
+  const ids=[...new Set([...staff.map(s=>s.uid),...punches.map(p=>p.uid),...tasks.map(t=>t.uid)])].filter(i=>i&&i!==me||(i===me&&punches.some(p=>p.uid===me)));
+  if(!sel||!ids.includes(sel))sel=ids[0]||null;
+  const list=ids.map(u=>`<div class="emp ${u===sel?'sel':''}" data-a="pick" data-u="${u}"><div><span class="dot ${open(u)?'on':''}"></span><b>${E(nm(u))}</b><div class="mu sm-t">${open(u)?'In since '+fTime(open(u).inAt):'Clocked out'}</div></div><div class="sm-t mu">${dur(worked(u,sod()))}<br>today</div></div>`).join('')||'<div class="mu">Employees appear here once they open this page. Share the link with them.</div>';
+  let det='<div class="card mu">Select an employee.</div>';
+  if(sel){const ts=tasks.filter(t=>t.uid===sel).sort((a,b)=>(a.status==='done')-(b.status==='done'));
+  det=`<div class="card"><h2>${E(nm(sel))} — tasks</h2>
+  <div class="row"><input id="n-title" placeholder="New task title"><input id="n-due" type="date" class="fix" style="width:auto"></div>
+  <textarea id="n-note" style="margin:6px 0" placeholder="Notes for the employee (optional)"></textarea><button class="pri" data-a="add">Add task</button>
+  <div style="margin-top:12px">${ts.map(t=>taskCard(t,false)).join('')||'<div class="mu">No tasks yet.</div>'}</div></div>
+  <div class="card"><h2>Timesheet</h2><div class="sm-t mu" style="margin-bottom:8px">This week: <b>${dur(worked(sel,sow()))}</b></div>${history(sel,30)}</div>`}
+  return `<div class="grid"><div><h2>Team</h2>${list}</div><div>${det}</div></div>`;
+}
+document.addEventListener('change',async e=>{
+  const t=e.target,a=t.dataset.a,id=t.dataset.id;
   try{
-    if(c&&!boss)await db.doc('progress/'+c.dataset.id).set({done:c.checked,by:me.id,at:Date.now()});
-    if(d&&boss&&confirm('Delete this task?')){await db.doc('tasks/'+d.dataset.del).delete();await db.doc('progress/'+d.dataset.del).delete().catch(()=>{})}
-  }catch(err){show('That action was not allowed.')}
-};
-$('sdate').onchange=e=>{if(e.target.value){sel=e.target.value;renderShift()}};
-$('sin').onchange=e=>saveShift({in:e.target.value});
-$('sout').onchange=e=>saveShift({out:e.target.value});
-$('cin').onclick=()=>{sel=today;$('sdate').value=today;saveShift({in:nowT()})};
-$('cout').onclick=()=>{sel=today;$('sdate').value=today;saveShift({out:nowT()})};
-$('snotes').oninput=e=>{clearTimeout(nt);const v=e.target.value;nt=setTimeout(()=>saveShift({notes:v}),700)};
+    if(a==='status')await db.collection('tasks').doc(id).update({status:t.value});
+    if(a==='empnote')await db.collection('tasks').doc(id).update({empNote:t.value});
+  }catch(err){alert('Could not save: '+(err.message||err))}
+});
+document.addEventListener('click',async e=>{
+  const b=e.target.closest('[data-a]');if(!b||/SELECT|TEXTAREA/.test(b.tagName))return;
+  const a=b.dataset.a,id=b.dataset.id;
+  try{
+    if(a==='view'){view=b.dataset.v;render()}
+    else if(a==='pick'){sel=b.dataset.u;editing=null;render()}
+    else if(a==='in'){await db.collection('punches').add({uid:me,inAt:punchMs(),outAt:null,note:$('#shiftnote').value,manual:!!(cDate||cTime)});cDate=cTime=''}
+    else if(a==='out'){const o=open(me);if(o){const t=punchMs();if(t<=o.inAt)return alert('Clock out must be after clock in ('+fDate(o.inAt)+' '+fTime(o.inAt)+').');await db.collection('punches').doc(o.id).update({outAt:t,note:$('#shiftnote').value});cDate=cTime=''}}
+    else if(a==='add'){const t=$('#n-title').value.trim();if(!t)return;
+      await db.collection('tasks').add({uid:sel,title:t,due:$('#n-due').value,note:$('#n-note').value,status:'todo',empNote:'',createdAt:Date.now()})}
+    else if(a==='addman'){const u=view==='employer'?sel:me,d=$('#m-date').value,i=$('#m-in').value,o=$('#m-out').value;
+      if(!u||!d||!i||!o)return alert('Enter a date, clock in time and clock out time.');
+      const a1=toMs(d,i),b1=toMs(d,o);if(b1<=a1)return alert('Clock out must be after clock in.');
+      await db.collection('punches').add({uid:u,inAt:a1,outAt:b1,note:$('#m-note').value,manual:true});$('#m-in').value=$('#m-out').value=$('#m-note').value=''}
+    else if(a==='editp'){editP=id;render()}
+    else if(a==='cancelp'){editP=null;render()}
+    else if(a==='savep'){const d=$('#p-date').value,i=$('#p-in').value,o=$('#p-out').value;if(!d||!i)return alert('Date and clock in are required.');
+      const a1=toMs(d,i),b1=o?toMs(d,o):null;if(b1!==null&&b1<=a1)return alert('Clock out must be after clock in.');
+      await db.collection('punches').doc(id).update({inAt:a1,outAt:b1,note:$('#p-note').value,manual:true});editP=null}
+    else if(a==='delp'){if(confirm('Delete this time entry?'))await db.collection('punches').doc(id).delete()}
+    else if(a==='edit'){editing=id;render()}
+    else if(a==='cancel'){editing=null;render()}
+    else if(a==='save'){await db.collection('tasks').doc(id).update({title:$('#e-title').value.trim()||'Untitled',due:$('#e-due').value,status:$('#e-st').value,note:$('#e-note').value});editing=null}
+    else if(a==='del'){if(confirm('Delete this task?'))await db.collection('tasks').doc(id).delete()}
+  }catch(err){alert('Could not save: '+(err.message||err))}
+});
 init();
-</script>
-</body>
-</html>
+</script></body></html>
+
 <!-- Website ready -->
